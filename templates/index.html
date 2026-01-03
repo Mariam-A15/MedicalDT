@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Diagnosis Bot</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; padding-top: 50px; background-color: #f4f4f9; }
+        .chat-container { width: 400px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .question { font-size: 1.2rem; margin-bottom: 20px; color: #333; }
+        .btn { padding: 10px 25px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+        .btn-yes { background-color: #28a745; color: white; }
+        .btn-no { background-color: #dc3545; color: white; }
+        .btn:hover { opacity: 0.8; }
+        .results { text-align: left; background: #e9ecef; padding: 15px; border-radius: 5px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>Medical AI Bot</h2>
+    <hr>
+    <div id="chat-box">
+        <p id="question-text" class="question">Loading first question...</p>
+        <div id="options">
+            <button class="btn btn-yes" onclick="sendAnswer(1)">Yes</button>
+            <button class="btn btn-no" onclick="sendAnswer(0)">No</button>
+        </div>
+    </div>
+    <div id="result-box" class="hidden">
+        <h3>Diagnosis Results:</h3>
+        <div id="final-results" class="results"></div>
+        <button class="btn" style="background:#007bff; color:white;" onclick="location.reload()">Restart</button>
+    </div>
+</div>
+
+<script>
+    let currentNode = 0;
+
+    async function fetchDiagnosis(node, answer = null) {
+        const response = await fetch('/diagnose/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ node_id: node, answer: answer })
+        });
+        const data = await response.json();
+        renderResponse(data);
+    }
+
+    function renderResponse(data) {
+        if (data.status === 'question') {
+            document.getElementById('question-text').innerText = data.question;
+            currentNode = data.node_id;
+        } else {
+            document.getElementById('chat-box').classList.add('hidden');
+            document.getElementById('result-box').classList.remove('hidden');
+            
+            let html = '<ul>';
+            data.results.forEach(res => {
+                html += `<li><strong>${res.disease}</strong>: ${res.confidence}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('final-results').innerHTML = html;
+        }
+    }
+
+    fetchDiagnosis(0);
+
+    function sendAnswer(ans) {
+        fetchDiagnosis(currentNode, ans);
+    }
+</script>
+
+</body>
+</html>
